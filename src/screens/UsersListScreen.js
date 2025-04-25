@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -13,9 +13,11 @@ import UserFormModal from '../components/UserFormModal';
 import { useNavigation } from '@react-navigation/native';
 
 const UsersListScreen = () => {
-  const { users, loading, error, deleteUser } = useContext(UserContext);
+  const { users, loading, error, deleteUser, fetchUsers } = useContext(UserContext);
   const [modalVisible, setModalVisible] = useState(false);
   const [editUser, setEditUser] = useState(null);
+  const [showError, setShowError] = useState(false);
+
   const navigation = useNavigation();
 
   const openModal = (user = null) => {
@@ -23,11 +25,23 @@ const UsersListScreen = () => {
     setModalVisible(true);
   };
 
+  useEffect(() => {
+    if (error) {
+      setShowError(true);
+      const timer = setTimeout(() => {
+        setShowError(false);
+        fetchUsers();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
-  if (error) return <Text>{error}</Text>;
 
   return (
     <View style={styles.container}>
+      {showError && <Text style={styles.errorText}>{error}</Text>}
+
       <Button title="Add User" onPress={() => openModal()} />
 
       <FlatList
@@ -91,6 +105,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 15,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+    textAlign: 'center',
   },
 });
 
